@@ -9,11 +9,38 @@ spring:
       ddl-auto: update
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    application:
+      name: your-service-name  # имя, по которому Config Server ищет конфиг
+      config:
+        import: "configserver:http://localhost:8888"  # URL Spring Cloud Config Server
+    cloud:
+      gateway:
+        routes:
+          - id: user-service
+            uri: lb://user-service  # load-balanced URL через Eureka
+            predicates:
+              - Path=/api/users/**
+            filters:
+              - StripPrefix=1
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/  # URL Eureka Server
+  instance:
+    preferIpAddress: true
+resilience4j:
+  circuit breaker:
+    instances:
+      externalService:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 5000
 
 server:
   port: 8080
 
-springdoc:
+spring-doc:
   openapi:
     urls:
       - /v3/api-docs
